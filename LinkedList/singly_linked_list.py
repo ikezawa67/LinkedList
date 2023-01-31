@@ -3,7 +3,7 @@ singly linked list module
 """
 
 from __future__ import annotations
-from typing import TypeVar, Generic, Optional, Iterable, Collection, Any, overload
+from typing import Iterator, TypeVar, Generic, Optional, Iterable, Collection, Any, overload
 
 
 _T = TypeVar('_T')
@@ -40,10 +40,11 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
             else:
                 raise TypeError('node next must be node')
 
-    def __init__(self, iterable: Optional[Iterable[_T]] = None):
+    def __init__(self, iterable: Optional[Iterable[_T]] = None) -> None:
         self._first_node: Optional[SinglyLinkedList._Node] = None
-        for _v in iterable:
-            self.append(_v)
+        if iterable is not None:
+            for _v in iterable:
+                self.append(_v)
 
     def __repr__(self) -> str:
         return [v for v in self].__repr__()
@@ -87,7 +88,7 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
     @overload
     def __setitem__(self, _s: slice, _o: Iterable[_T]) -> None: ...
 
-    def __setitem__(self, index, value):
+    def __setitem__(self, index, value) -> None:
         if isinstance(index, int):
             if self._first_node is None:
                 raise IndexError('list assignment index out of range')
@@ -114,26 +115,23 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
     @overload
     def __delitem__(self, _s: slice) -> None: ...
 
-    def __delitem__(self, index: Any):
+    def __delitem__(self, index: Any) -> None:
         if isinstance(index, int):
             if self._first_node is None:
                 raise IndexError('list assignment index out of range')
             else:
-                if index == 0:
-                    delete_node = self._first_node
-                    self._first_node = delete_node.next
-                    del delete_node
+                prev_node = None
+                new_node = self._first_node
+                for _ in range(index):
+                    if new_node is None:
+                        raise IndexError('list assignment index out of range')
+                    prev_node = new_node
+                    new_node = new_node.next
+                if prev_node is None:
+                    self._first_node = new_node.next
                 else:
-                    prev_node = self._first_node
-                    delete_node = prev_node.next
-                    for _ in range(1, index):
-                        prev_node = delete_node
-                        delete_node = prev_node.next
-                        if not isinstance(delete_node, SinglyLinkedList._Node):
-                            raise IndexError(
-                                'list assignment index out of range')
-                    prev_node.next = delete_node.next
-                    del delete_node
+                    prev_node.next = new_node.next
+                del new_node
         elif isinstance(index, slice):
             start, stop, stride = index.indices(len(self))
             for _i in range(start, stop, stride):
@@ -142,7 +140,7 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
             raise TypeError(
                 f'list indices must be integers or slices, not {type(index)}')
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[_T]:
         _i = 0
         try:
             while True:
@@ -152,7 +150,7 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
         except IndexError:
             return
 
-    def __contains__(self, value: Any):
+    def __contains__(self, value: Any) -> bool:
         for _v in self:
             if _v is value or _v == value:
                 return True
@@ -160,51 +158,43 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
 
     def insert(self, index: int, value: _T) -> None:
         'S.insert(index, value) -- insert value before index'
-        if self._first_node is None:
+        if 0 == len(self):
             self._first_node = self._Node(value)
-        elif index == 0:
-            next_node = self._first_node
-            self._first_node = self._Node(value)
-            self._first_node.next = next_node
         else:
-            index = min(index, len(self))
-            prev_node = self._first_node
-            for _ in range(index - 1):
-                prev_node = prev_node.next
+            prev_node = None
+            new_node = self._first_node
+            for _ in range(index):
+                if new_node is None:
+                    break
+                prev_node = new_node
+                new_node = new_node.next
             node = self._Node(value)
-            node.next = prev_node.next
-            prev_node.next = node
+            if prev_node is None:
+                self._first_node = node
+                self._first_node.next = new_node
+            else:
+                prev_node.next = node
+                node.next = new_node
 
-    def index(self, value: Any, start: int = 0, stop: Optional[int] = None):
+    def index(self, value: Any, start: Optional[int] = None, stop: Optional[int] = None) -> int:
         'S.index(value, [start, [stop]]) -> integer -- return first index of value'
-        if start is not None and start < 0:
-            start = max(len(self) + start, 0)
-        if stop is not None and stop < 0:
-            stop += len(self)
-        _i = start
-        while stop is None or _i < stop:
-            try:
-                _v = self[_i]
-                if _v is value or _v == value:
-                    return _i
-            except IndexError:
-                break
-            _i += 1
+        start = max(0, start) if isinstance(start, int) else 0
+        stop = min(stop, len(self)) if isinstance(stop, int) else len(self)
+        for _i in range(start, stop):
+            _v = self[_i]
+            if _v is value or _v == value:
+                return _i
         raise ValueError()
 
     def append(self, value: _T) -> None:
         'S.append(value) -- append value to the end of the sequence'
         self.insert(len(self), value)
 
-    def remove(self, value: _T):
+    def remove(self, value: _T) -> None:
         'S.remove(value) -- remove first occurrence of value'
         del self[self.index(value)]
 
-    def clear(self):
+    def clear(self) -> None:
         'S.clear() -> None -- remove all items from S'
-        for _v in self:
-            self.remove(_v)
-
-
-a = SinglyLinkedList([1, 2, 3, 4, 5])
-print(a)
+        for _ in range(len(self)):
+            del self[0]
