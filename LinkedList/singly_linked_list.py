@@ -3,15 +3,18 @@ singly linked list module
 """
 
 from __future__ import annotations
-from typing import Iterator, TypeVar, Generic, Optional, Iterable, Collection, Any, overload
-
+from typing import Iterator, Iterable, Collection
+from typing import TypeVar, Generic
+from typing import Optional, Any, overload
 
 _T = TypeVar('_T')
 
 
 class SinglyLinkedList(Collection[_T], Generic[_T]):
     'singly linked list class'
+
     class _Node(Generic[_T]):
+
         def __init__(self, value: _T) -> None:
             self._value = value
             self._next: Optional[SinglyLinkedList._Node] = None
@@ -58,9 +61,12 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
         return _len
 
     @overload
-    def __getitem__(self, _i: int) -> _T: ...
+    def __getitem__(self, _i: int) -> _T:
+        ...
+
     @overload
-    def __getitem__(self, _s: slice) -> SinglyLinkedList[_T]: ...
+    def __getitem__(self, _s: slice) -> SinglyLinkedList[_T]:
+        ...
 
     def __getitem__(self, index: Any) -> Any:
         if isinstance(index, int):
@@ -84,9 +90,12 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
                 f'list indices must be integers or slices, not {type(index)}')
 
     @overload
-    def __setitem__(self, _i: int, _v: _T) -> None: ...
+    def __setitem__(self, _i: int, _v: _T) -> None:
+        ...
+
     @overload
-    def __setitem__(self, _s: slice, _o: Iterable[_T]) -> None: ...
+    def __setitem__(self, _s: slice, _o: Iterable[_T]) -> None:
+        ...
 
     def __setitem__(self, index, value) -> None:
         if isinstance(index, int):
@@ -111,9 +120,12 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
                 f'list indices must be integers or slices, not {type(index)}')
 
     @overload
-    def __delitem__(self, _i: int) -> None: ...
+    def __delitem__(self, _i: int) -> None:
+        ...
+
     @overload
-    def __delitem__(self, _s: slice) -> None: ...
+    def __delitem__(self, _s: slice) -> None:
+        ...
 
     def __delitem__(self, index: Any) -> None:
         if isinstance(index, int):
@@ -176,7 +188,10 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
                 prev_node.next = node
                 node.next = new_node
 
-    def index(self, value: Any, start: Optional[int] = None, stop: Optional[int] = None) -> int:
+    def index(self,
+              value: Any,
+              start: Optional[int] = None,
+              stop: Optional[int] = None) -> int:
         'S.index(value, [start, [stop]]) -> integer -- return first index of value'
         start = max(0, start) if isinstance(start, int) else 0
         stop = min(stop, len(self)) if isinstance(stop, int) else len(self)
