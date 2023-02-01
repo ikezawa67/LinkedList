@@ -126,7 +126,7 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
     def __setitem__(self, _s: slice, _o: Iterable[_T]) -> None:
         ...
 
-    def __setitem__(self, index, value) -> None:
+    def __setitem__(self, index: Any, value: Any) -> None:
         if isinstance(index, int):
             if self._first_node is None:
                 raise IndexError('list assignment index out of range')
