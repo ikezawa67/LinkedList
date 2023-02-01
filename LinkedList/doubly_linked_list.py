@@ -46,7 +46,7 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
                 if _prev.next is not self:
                     _prev.next = self
             else:
-                raise TypeError('node prev must be node')
+                raise TypeError('node next must be _Node or None')
 
         @property
         def next(self) -> Optional[DoublyLinkedList._Node]:

@@ -1,5 +1,5 @@
 """
-singly linked list module
+singly circularly linked list module
 """
 
 from __future__ import annotations
@@ -10,14 +10,14 @@ from typing import Optional, Any, overload
 _T = TypeVar('_T')
 
 
-class SinglyLinkedList(Collection[_T], Generic[_T]):
-    'singly linked list class'
+class SinglyCircularlyLinkedList(Collection[_T], Generic[_T]):
+    'singly circularly linked list class'
 
     class _Node(Generic[_T]):
 
         def __init__(self, value: _T) -> None:
             self._value = value
-            self._next: Optional[SinglyLinkedList._Node] = None
+            self._next: SinglyCircularlyLinkedList._Node = self
 
         @property
         def value(self) -> _T:
@@ -32,19 +32,19 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
                 raise TypeError(f'node values must be {type(self._value)}')
 
         @property
-        def next(self) -> Optional[SinglyLinkedList._Node]:
+        def next(self) -> SinglyCircularlyLinkedList._Node:
             'next node'
             return self._next
 
         @next.setter
-        def next(self, _next: Optional[SinglyLinkedList._Node]) -> None:
-            if isinstance(_next, type(self)) or _next is None:
+        def next(self, _next: SinglyCircularlyLinkedList._Node) -> None:
+            if isinstance(_next, type(self)):
                 self._next = _next
             else:
                 raise TypeError('node next must be _Node or None')
 
     def __init__(self, iterable: Optional[Iterable[_T]] = None) -> None:
-        self._first_node: Optional[SinglyLinkedList._Node] = None
+        self._last_node: Optional[SinglyCircularlyLinkedList._Node] = None
         if iterable is not None:
             for _v in iterable:
                 self.append(_v)
@@ -53,35 +53,38 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
         return [v for v in self].__repr__()
 
     def __len__(self) -> int:
-        _len = 0
-        node = self._first_node
-        while isinstance(node, SinglyLinkedList._Node):
-            _len += 1
-            node = node.next
-        return _len
+        if self._last_node is None:
+            return 0
+        else:
+            _len = 1
+            node = self._last_node.next
+            while node is not self._last_node:
+                _len += 1
+                node = node.next
+            return _len
 
     @overload
     def __getitem__(self, _i: int) -> _T:
         ...
 
     @overload
-    def __getitem__(self, _s: slice) -> SinglyLinkedList[_T]:
+    def __getitem__(self, _s: slice) -> SinglyCircularlyLinkedList[_T]:
         ...
 
     def __getitem__(self, index: Any) -> Any:
         if isinstance(index, int):
-            if self._first_node is None:
+            if self._last_node is None:
                 raise IndexError('list assignment index out of range')
             else:
-                node = self._first_node
+                node = self._last_node.next
                 for _ in range(index):
                     node = node.next
-                    if node is None:
+                    if node is self._last_node.next:
                         raise IndexError('list assignment index out of range')
                 return node.value
         elif isinstance(index, slice):
             start, stop, step = index.indices(len(self))
-            result = SinglyLinkedList()
+            result = SinglyCircularlyLinkedList()
             for _i in range(start, stop, step):
                 result.append(self[_i])
             return result
@@ -99,13 +102,13 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
 
     def __setitem__(self, index: Any, value: Any) -> None:
         if isinstance(index, int):
-            if self._first_node is None:
+            if self._last_node is None:
                 raise IndexError('list assignment index out of range')
             else:
-                node = self._first_node
+                node = self._last_node.next
                 for _ in range(index):
                     node = node.next
-                    if node is None:
+                    if node is self._last_node.next:
                         raise IndexError('list assignment index out of range')
                 node.value = value
         elif isinstance(index, slice):
@@ -129,18 +132,22 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
 
     def __delitem__(self, index: Any) -> None:
         if isinstance(index, int):
-            if self._first_node is None:
+            if self._last_node is None:
                 raise IndexError('list assignment index out of range')
             else:
-                prev_node = None
-                new_node = self._first_node
+                prev_node = self._last_node
+                new_node = self._last_node.next
                 for _ in range(index):
-                    if new_node is None:
+                    if new_node is self._last_node.next:
                         raise IndexError('list assignment index out of range')
                     prev_node = new_node
                     new_node = new_node.next
-                if prev_node is None:
-                    self._first_node = new_node.next
+                if new_node is self._last_node:
+                    prev_node.next = new_node.next
+                    if prev_node.next is prev_node:
+                        self._last_node = None
+                    else:
+                        self._last_node = prev_node
                 else:
                     prev_node.next = new_node.next
                 del new_node
@@ -168,22 +175,23 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
                 return True
         return False
 
-    def insert(self, index: int, value: _T) -> None:
+    def insert(self, index: int, value: _T, circulate: bool = False) -> None:
         'S.insert(index, value) -- insert value before index'
-        if self._first_node is None:
-            self._first_node = self._Node(value)
+        if self._last_node is None:
+            self._last_node = self._Node(value)
         else:
-            prev_node = None
-            new_node = self._first_node
+            prev_node = self._last_node
+            new_node = self._last_node.next
             for _ in range(index):
-                if new_node is None:
+                if circulate and new_node is self._last_node.next:
                     break
                 prev_node = new_node
                 new_node = new_node.next
             node = self._Node(value)
-            if prev_node is None:
-                self._first_node = node
-                self._first_node.next = new_node
+            if prev_node is self._last_node:
+                prev_node.next = node
+                self._last_node = node
+                self._last_node.next = new_node
             else:
                 prev_node.next = node
                 node.next = new_node
@@ -213,3 +221,13 @@ class SinglyLinkedList(Collection[_T], Generic[_T]):
         'S.clear() -> None -- remove all items from S'
         for _ in range(len(self)):
             del self[0]
+
+
+a = SinglyCircularlyLinkedList([1, 2, 3, 4, 5])
+print(a)
+a.clear()
+print(a)
+a.insert(1000, 10, True)
+a.insert(1000, 11, True)
+a.insert(1000, 12, True)
+print(a)
