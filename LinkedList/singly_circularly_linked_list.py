@@ -41,7 +41,7 @@ class SinglyCircularlyLinkedList(Collection[_T], Generic[_T]):
             if isinstance(_next, type(self)):
                 self._next = _next
             else:
-                raise TypeError('node next must be _Node or None')
+                raise TypeError('node next must be _Node')
 
     def __init__(self, iterable: Optional[Iterable[_T]] = None) -> None:
         self._last_node: Optional[SinglyCircularlyLinkedList._Node] = None
@@ -142,14 +142,12 @@ class SinglyCircularlyLinkedList(Collection[_T], Generic[_T]):
                         raise IndexError('list assignment index out of range')
                     prev_node = new_node
                     new_node = new_node.next
+                prev_node.next = new_node.next
                 if new_node is self._last_node:
-                    prev_node.next = new_node.next
                     if prev_node.next is prev_node:
                         self._last_node = None
                     else:
                         self._last_node = prev_node
-                else:
-                    prev_node.next = new_node.next
                 del new_node
         elif isinstance(index, slice):
             start, stop, stride = index.indices(len(self))
@@ -183,18 +181,15 @@ class SinglyCircularlyLinkedList(Collection[_T], Generic[_T]):
             prev_node = self._last_node
             new_node = self._last_node.next
             for _ in range(index):
-                if circulate and new_node is self._last_node.next:
+                if not circulate and new_node is self._last_node.next:
                     break
                 prev_node = new_node
                 new_node = new_node.next
             node = self._Node(value)
+            prev_node.next = node
+            node.next = new_node
             if prev_node is self._last_node:
-                prev_node.next = node
                 self._last_node = node
-                self._last_node.next = new_node
-            else:
-                prev_node.next = node
-                node.next = new_node
 
     def index(self,
               value: Any,
@@ -211,7 +206,13 @@ class SinglyCircularlyLinkedList(Collection[_T], Generic[_T]):
 
     def append(self, value: _T) -> None:
         'S.append(value) -- append value to the end of the sequence'
-        self.insert(len(self), value)
+        if self._last_node is None:
+            self._last_node = self._Node(value)
+        else:
+            next_node = self._last_node.next
+            self._last_node.next = self._Node(value)
+            self._last_node = self._last_node.next
+            self._last_node.next = next_node
 
     def remove(self, value: _T) -> None:
         'S.remove(value) -- remove first occurrence of value'
@@ -221,13 +222,3 @@ class SinglyCircularlyLinkedList(Collection[_T], Generic[_T]):
         'S.clear() -> None -- remove all items from S'
         for _ in range(len(self)):
             del self[0]
-
-
-a = SinglyCircularlyLinkedList([1, 2, 3, 4, 5])
-print(a)
-a.clear()
-print(a)
-a.insert(1000, 10, True)
-a.insert(1000, 11, True)
-a.insert(1000, 12, True)
-print(a)

@@ -1,5 +1,5 @@
 """
-doubly linked list module
+doubly circularly linked list module
 """
 
 from __future__ import annotations
@@ -10,15 +10,15 @@ from typing import Optional, Any, overload
 _T = TypeVar('_T')
 
 
-class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
-    'doubly linked list class'
+class DoublyCircularlyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
+    'doubly circularly linked list class'
 
     class _Node(Generic[_T]):
 
         def __init__(self, value: _T) -> None:
             self._value = value
-            self._prev: Optional[DoublyLinkedList._Node] = None
-            self._next: Optional[DoublyLinkedList._Node] = None
+            self._prev: DoublyCircularlyLinkedList._Node = self
+            self._next: DoublyCircularlyLinkedList._Node = self
 
         @property
         def value(self) -> _T:
@@ -33,40 +33,35 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
                 raise TypeError(f'node values must be {type(self._value)}')
 
         @property
-        def prev(self) -> Optional[DoublyLinkedList._Node]:
+        def prev(self) -> DoublyCircularlyLinkedList._Node:
             'prev node'
             return self._prev
 
         @prev.setter
-        def prev(self, _prev: Optional[DoublyLinkedList._Node]) -> None:
-            if _prev is None:
-                self._prev = _prev
-            elif isinstance(_prev, type(self)):
+        def prev(self, _prev: DoublyCircularlyLinkedList._Node) -> None:
+            if isinstance(_prev, type(self)):
                 self._prev = _prev
                 if _prev.next is not self:
                     _prev.next = self
             else:
-                raise TypeError('node next must be _Node or None')
+                raise TypeError('node next must be _Node')
 
         @property
-        def next(self) -> Optional[DoublyLinkedList._Node]:
+        def next(self) -> DoublyCircularlyLinkedList._Node:
             'next node'
             return self._next
 
         @next.setter
-        def next(self, _next: Optional[DoublyLinkedList._Node]) -> None:
-            if _next is None:
-                self._next = None
-            elif isinstance(_next, type(self)):
+        def next(self, _next: DoublyCircularlyLinkedList._Node) -> None:
+            if isinstance(_next, type(self)):
                 self._next = _next
                 if _next.prev is not self:
                     _next.prev = self
             else:
-                raise TypeError('node next must be _Node or None')
+                raise TypeError('node next must be _Node')
 
     def __init__(self, iterable: Optional[Iterable[_T]] = None):
-        self._first_node: Optional[DoublyLinkedList._Node] = None
-        self._last_node: Optional[DoublyLinkedList._Node] = None
+        self._last_node: Optional[DoublyCircularlyLinkedList._Node] = None
         if iterable is not None:
             for _v in iterable:
                 self.append(_v)
@@ -75,42 +70,45 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
         return [v for v in self].__repr__()
 
     def __len__(self) -> int:
-        _len = 0
-        node = self._first_node
-        while isinstance(node, DoublyLinkedList._Node):
-            _len += 1
-            node = node.next
-        return _len
+        if self._last_node is None:
+            return 0
+        else:
+            _len = 1
+            node = self._last_node.next
+            while node is not self._last_node:
+                _len += 1
+                node = node.next
+            return _len
 
     @overload
     def __getitem__(self, _i: int) -> _T:
         ...
 
     @overload
-    def __getitem__(self, _s: slice) -> DoublyLinkedList[_T]:
+    def __getitem__(self, _s: slice) -> DoublyCircularlyLinkedList[_T]:
         ...
 
     def __getitem__(self, index: Any) -> Any:
         if isinstance(index, int):
-            if self._first_node is None:
+            if self._last_node is None:
                 raise IndexError('list assignment index out of range')
             elif 0 <= index:
-                node = self._first_node
+                node = self._last_node.next
                 for _ in range(index):
                     node = node.next
-                    if node is None:
+                    if node is self._last_node.next:
                         raise IndexError('list assignment index out of range')
                 return node.value
             else:
                 node = self._last_node
                 for _ in range(1, abs(index)):
                     node = node.prev
-                    if node is None:
+                    if node is self._last_node:
                         raise IndexError('list assignment index out of range')
                 return node.value
         elif isinstance(index, slice):
             start, stop, step = index.indices(len(self))
-            result = DoublyLinkedList()
+            result = DoublyCircularlyLinkedList()
             for _i in range(start, stop, step):
                 result.append(self[_i])
             return result
@@ -128,10 +126,10 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
 
     def __setitem__(self, index: Any, value: Any) -> None:
         if isinstance(index, int):
-            if self._first_node is None:
+            if self._last_node is None:
                 raise IndexError('list assignment index out of range')
             elif 0 <= index:
-                node = self._first_node
+                node = self._last_node.next
                 for _ in range(index):
                     node = node.next
                     if node is None:
@@ -165,44 +163,32 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
 
     def __delitem__(self, index: Any) -> None:
         if isinstance(index, int):
-            if self._first_node is None and self._last_node is None:
+            if self._last_node is None:
                 raise IndexError('list assignment index out of range')
             elif 0 <= index:
-                new_node = self._first_node
-                prev_node = new_node.prev
+                new_node = self._last_node.next
                 for _ in range(index):
-                    if new_node is None:
+                    if new_node is self._last_node.next:
                         raise IndexError('list assignment index out of range')
-                    prev_node = new_node
                     new_node = new_node.next
-                if prev_node is None:
-                    self._first_node = new_node.next
-                    if self._first_node is not None:
-                        self._first_node.prev = None
-                elif new_node.next is None:
-                    self._last_node = prev_node
-                    if self._last_node is not None:
-                        self._last_node.next = None
-                else:
-                    prev_node.next = new_node.next
+                new_node.prev.next = new_node.next
+                if new_node is self._last_node:
+                    if new_node.prev.next is new_node.prev:
+                        self._last_node = None
+                    else:
+                        self._last_node = new_node.prev
             else:
                 new_node = self._last_node
-                next_node = new_node.next
                 for _ in range(abs(index)):
-                    if new_node is None:
+                    if new_node is self._last_node:
                         raise IndexError('list assignment index out of range')
-                    next_node = new_node
                     new_node = new_node.prev
-                if next_node is None:
-                    self._last_node = new_node.prev
-                    if self._last_node is not None:
-                        self._last_node.next = None
-                elif new_node.prev is None:
-                    self._first_node = next_node
-                    if self._first_node is not None:
-                        self._first_node.prev = None
-                else:
-                    next_node.prev = new_node.prev
+                new_node.next.prev = new_node.prev
+                if new_node is self._last_node:
+                    if new_node.next.prev is new_node.next:
+                        self._last_node = None
+                    else:
+                        self._last_node = new_node.next
             del new_node
         elif isinstance(index, slice):
             start, stop, stride = index.indices(len(self))
@@ -238,47 +224,32 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
                 return True
         return False
 
-    def insert(self, index: int, value: _T) -> None:
+    def insert(self, index: int, value: _T, circulate: bool = False) -> None:
         'S.insert(index, value) -- insert value before index'
-        if self._first_node is None and self._last_node is None:
-            self._first_node = self._Node(value)
-            self._last_node = self._first_node
+        if self._last_node is None:
+            self._last_node = self._Node(value)
         elif 0 <= index:
-            new_node = self._first_node
-            prev_node = new_node.prev
+            new_node = self._last_node.next
             for _ in range(index):
-                if new_node is None:
-                    break
-                prev_node = new_node
                 new_node = new_node.next
+                if not circulate and new_node is self._last_node.next:
+                    break
             node = self._Node(value)
-            if prev_node is None:
-                self._first_node = node
-                self._first_node.next = new_node
-            elif new_node is None:
+            if new_node.prev is self._last_node:
                 self._last_node = node
-                self._last_node.prev = prev_node
-            else:
-                prev_node.next = node
-                node.next = new_node
+            new_node.prev.next = node
+            node.next = new_node
         else:
             new_node = self._last_node
-            next_node = new_node.next
             for _ in range(abs(index)):
-                if new_node is None:
-                    break
-                next_node = new_node
                 new_node = new_node.prev
+                if not circulate and new_node is self._last_node:
+                    break
             node = self._Node(value)
-            if next_node is None:
+            if new_node.next is self._last_node:
                 self._last_node = node
-                self._last_node.prev = new_node
-            elif new_node is None:
-                self._first_node = node
-                self._first_node.next = next_node
-            else:
-                next_node.prev = node
-                node.prev = new_node
+            new_node.next.prev = node
+            node.prev = new_node
 
     def index(self,
               value: Any,
@@ -302,7 +273,13 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
 
     def append(self, value: _T) -> None:
         'S.append(value) -- append value to the end of the sequence'
-        self.insert(len(self), value)
+        if self._last_node is None:
+            self._last_node = self._Node(value)
+        else:
+            next_node = self._last_node.next
+            self._last_node.next = self._Node(value)
+            self._last_node = self._last_node.next
+            self._last_node.next = next_node
 
     def remove(self, value: _T) -> None:
         'S.remove(value) -- remove first occurrence of value'
