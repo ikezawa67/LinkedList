@@ -302,7 +302,12 @@ class DoublyLinkedList(Collection[_T], Reversible[_T], Generic[_T]):
 
     def append(self, value: _T) -> None:
         'S.append(value) -- append value to the end of the sequence'
-        self.insert(len(self), value)
+        if self._first_node is None and self._last_node is None:
+            self._first_node = self._Node(value)
+            self._last_node = self._first_node
+        else:
+            self._last_node.next = self._Node(value)
+            self._last_node = self._last_node.next
 
     def remove(self, value: _T) -> None:
         'S.remove(value) -- remove first occurrence of value'
