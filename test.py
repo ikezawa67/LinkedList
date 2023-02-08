@@ -18,6 +18,6 @@ print(f'singly linked list {APPEND_NUMBER} append time: \
 print(f'doubly linked list {APPEND_NUMBER} append time: \
     {_append_timer(DoublyLinked())}')
 print(f'singly circularly linked list {APPEND_NUMBER} append time: \
-    {_append_timer(SinglyCircularlyLinkedList())}')
+    {_append_timer(SinglyCircularlyLinked())}')
 print(f'doubly circularly linked list {APPEND_NUMBER} append time: \
-    {_append_timer(DoublyCircularlyLinkedList())}')
+    {_append_timer(DoublyCircularlyLinked())}')
