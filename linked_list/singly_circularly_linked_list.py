@@ -17,7 +17,7 @@ class Node(Generic[_T]):
     value: _T
     next: Node[_T] = field(repr=False)
 
-    def __init__(self, _value, _next:Node|None = None) -> None:
+    def __init__(self, _value, _next: Node | None = None) -> None:
         object.__setattr__(self, 'value', _value)
         if _next is None:
             object.__setattr__(self, 'next', self)
@@ -25,7 +25,7 @@ class Node(Generic[_T]):
             object.__setattr__(self, 'next', _next)
 
 
-class SinglyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
+class SinglyCircularlyLinked(MutableSequence[Node[_T]], Generic[_T]):
     'singly circularly linked list class'
 
     @overload
@@ -46,7 +46,7 @@ class SinglyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
         if self._last_node is None:
             return 0
         else:
-            _len = 1
+            _len = 0
             node = self._last_node.next
             while node is not self._last_node:
                 _len += 1
@@ -65,11 +65,10 @@ class SinglyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
 
     @overload
     def __getitem__(self, _i: int) -> Node[_T]: ...
-
     @overload
-    def __getitem__(self, _s: slice) -> SinglyCircularlyLinkedList[Node[_T]]: ...
+    def __getitem__(self, _s: slice) -> SinglyCircularlyLinked[Node[_T]]: ...
 
-    def __getitem__(self, index: int | slice) -> Node[_T] | SinglyCircularlyLinkedList[Node[_T]]:
+    def __getitem__(self, index: int | slice) -> Node[_T] | SinglyCircularlyLinked[Node[_T]]:
         if isinstance(index, int):
             if self._last_node is None:
                 raise IndexError('list assignment index out of range')
@@ -80,7 +79,7 @@ class SinglyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
                 return node
         elif isinstance(index, slice):
             start, stop, step = index.indices(len(self))
-            result = SinglyCircularlyLinkedList()
+            result = SinglyCircularlyLinked()
             for _i in range(start, stop, step):
                 result.append(self[_i])
             return result

@@ -30,7 +30,7 @@ class Node(Generic[_T]):
             object.__setattr__(self, 'next', _next)
 
 
-class DoublyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
+class DoublyCircularlyLinked(MutableSequence[Node[_T]], Generic[_T]):
     'doubly circularly linked list class'
 
     @overload
@@ -51,7 +51,7 @@ class DoublyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
         if self._last_node is None:
             return 0
         else:
-            _len = 1
+            _len = 0
             node = self._last_node.next
             while node is not self._last_node:
                 _len += 1
@@ -59,28 +59,25 @@ class DoublyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
             return _len
 
     def _valid_index(self, index: int, _raise: bool = True) -> int:
+        _n = len(self)
         if 0 <= index:
-            _n = len(self) - 1
             if index > _n:
                 if _raise:
                     raise IndexError('list assignment index out of range')
                 index = _n
         else:
-            _n = len(self)
-            if abs(index) > _n:
+            if abs(index) > _n + 1:
                 if _raise:
                     raise IndexError('list assignment index out of range')
-                index = -_n
+                index = - (_n + 1)
         return index
 
     @overload
     def __getitem__(self, _i: int) -> Node[_T]: ...
-
     @overload
-    def __getitem__(
-        self, _s: slice) -> DoublyCircularlyLinkedList[Node[_T]]: ...
+    def __getitem__(self, _s: slice) -> DoublyCircularlyLinked[Node[_T]]: ...
 
-    def __getitem__(self, index: int | slice) -> Node[_T] | DoublyCircularlyLinkedList[Node[_T]]:
+    def __getitem__(self, index: int | slice) -> Node[_T] | DoublyCircularlyLinked[Node[_T]]:
         if isinstance(index, int):
             if self._last_node is None:
                 raise IndexError('list assignment index out of range')
@@ -96,7 +93,7 @@ class DoublyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
                 return node
         elif isinstance(index, slice):
             start, stop, step = index.indices(len(self))
-            result = DoublyCircularlyLinkedList()
+            result = DoublyCircularlyLinked()
             for _i in range(start, stop, step):
                 result.append(self[_i])
             return result
@@ -215,7 +212,7 @@ class DoublyCircularlyLinkedList(MutableSequence[Node[_T]], Generic[_T]):
         if self._last_node is None:
             self._last_node = Node(value)
         else:
-            next_node = self._last_node.next
-            self._last_node.next = Node(value)
+            new_node = Node(value, self._last_node, self._last_node.next)
+            object.__setattr__(self._last_node.next, 'prev', new_node)
+            object.__setattr__(self._last_node, 'next', new_node)
             self._last_node = self._last_node.next
-            self._last_node.next = next_node
