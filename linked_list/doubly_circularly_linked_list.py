@@ -111,7 +111,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             start, stop, step = _index.indices(len(self))
             return List([self[_i] for _i in range(start, stop, step)])
         else:
-            raise IndexError(f'list indices must be integers or slices, not {type(_index)}')
+            raise TypeError(f'index must be integers or slices, not {type(_index)}')
 
     @overload
     def __setitem__(self: Self, __i: int, __v: _T) -> None: ...
@@ -149,7 +149,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             else:
                 raise TypeError('can only assign an iterable')
         else:
-            raise TypeError(f'list indices must be integers or slices, not {type(_index)}')
+            raise TypeError(f'index must be integers or slices, not {type(_index)}')
 
     @overload
     def __delitem__(self: Self, __i: int) -> None: ...
@@ -183,7 +183,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             for _i in range(start, stop, stride):
                 del self[_i]
         else:
-            raise TypeError(f'list indices must be integers or slices, not {type(_index)}')
+            raise TypeError(f'index must be integers or slices, not {type(_index)}')
 
     def __reversed__(self: Self) -> Iterator[Node[_T]]:
         _i = -1
@@ -201,7 +201,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def insert(self: Self, __n: Node[_T], __v: _T) -> None: ...
 
     def insert(self: Self, _index: int | Node[_T], _value: _T) -> None:
-        'S.insert(index, value) -- insert value before index or node'
+        'insert value before index or next node'
         try:
             node = Node(_value, _index, _index.next)
             object.__setattr__(_index.next, 'prev', node)
@@ -216,16 +216,16 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
                 else:
                     self.insert(self[_index - 1], _value)
             else:
-                raise IndexError('index is an index or a node') from exc
+                raise IndexError('index must be integers or a node') from exc
 
     def append(self: Self, _value: _T) -> None:
-        'S.append(value) -- append value to the end of the sequence'
+        'append value to the end of the sequence'
         node = Node(_value, self._head.prev, self._head)
         object.__setattr__(self._head.prev, 'next', node)
         object.__setattr__(self._head, 'prev', node)
 
     def reverse(self: Self):
-        'S.reverse() -- reverse *IN PLACE*'
+        'reverse the list'
         for i in range(len(self) // 2):
             node_0, node_1 = self[i], self[- (i + 1)]
             prev_0, prev_1 = node_0.prev, node_1.prev
@@ -254,9 +254,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def remove(self: Self, __n: Node[_T]) -> None: ...
 
     def remove(self: Self, _value: _T | Node[_T]) -> None:
-        '''S.remove(value) -- remove first occurrence of value.
-           Raise ValueError if the value is not present.
-        '''
+        'remove first occurrence of value or node'
         try:
             object.__setattr__(_value.prev, 'next', _value.next)
             object.__setattr__(_value.next, 'prev', _value.prev)

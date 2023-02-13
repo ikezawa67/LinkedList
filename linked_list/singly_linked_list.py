@@ -98,7 +98,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             start, stop, step = _index.indices(len(self))
             return List([self[_i] for _i in range(start, stop, step)])
         else:
-            raise IndexError(f'list indices must be integers or slices, not {type(_index)}')
+            raise IndexError(f'index must be integers or slices, not {type(_index)}')
 
     @overload
     def __setitem__(self: Self, __i: int, __v: _T) -> None: ...
@@ -126,7 +126,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             else:
                 raise TypeError('can only assign an iterable')
         else:
-            raise TypeError(f'list indices must be integers or slices, not {type(_index)}')
+            raise TypeError(f'index must be integers or slices, not {type(_index)}')
 
     @overload
     def __delitem__(self: Self, __i: int) -> None: ...
@@ -153,7 +153,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             for _i in range(start, stop, stride):
                 del self[_i]
         else:
-            raise TypeError(f'list indices must be integers or slices, not {type(_index)}')
+            raise TypeError(f'index must be integers or slices, not {type(_index)}')
 
     @overload
     def insert(self: Self, __i: int, __v: _T) -> None: ...
@@ -161,7 +161,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def insert(self: Self, __n: Node[_T], __v: _T) -> None: ...
 
     def insert(self: Self, _index: int | Node[_T], _value: _T) -> None:
-        'S.insert(index, value) -- insert value before index or node'
+        'insert value before index or next node'
         try:
             node = Node(_value, _index.next)
             object.__setattr__(_index, 'next', node)
@@ -175,16 +175,16 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
                 else:
                     self.insert(self[_index - 1], _value)
             else:
-                raise IndexError('index is an index or a node') from exc
+                raise IndexError('index must be integers or a node') from exc
 
     def append(self: Self, _value: _T) -> None:
-        'S.append(value) -- append value to the end of the sequence'
+        'append value to the end of the sequence'
         node = Node(_value)
         object.__setattr__(self._tail, 'next', node)
         self._tail = node
 
     def reverse(self: Self):
-        'S.reverse() -- reverse *IN PLACE*'
+        'reverse the list'
         _n = len(self)
         for i in range(_n // 2):
             prev_0, prev_1 = self._head if i == 0 else self[i - 1], self[_n - i - 2]
