@@ -40,11 +40,11 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     __slots__ = ('_head', '_tail', )
 
     @overload
-    def __init__(self:Self) -> None: ...
+    def __init__(self: Self) -> None: ...
     @overload
-    def __init__(self:Self, __i: Iterable[_T]) -> None: ...
+    def __init__(self: Self, __i: Iterable[_T]) -> None: ...
 
-    def __init__(self:Self, _iterable: Iterable[_T] | None = None) -> None:
+    def __init__(self: Self, _iterable: Iterable[_T] | None = None) -> None:
         self._head: Node[None] = Node(None)
         object.__setattr__(self._head, 'next', self._head)
         object.__setattr__(self._head, 'prev', self._head)
@@ -52,7 +52,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             for _v in _iterable:
                 self.append(_v)
 
-    def __repr__(self:Self) -> str:
+    def __repr__(self: Self) -> str:
         return repr([v for v in self])
 
     def __sizeof__(self: Self) -> int:
@@ -68,7 +68,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             _len += 1
         return _len
 
-    def _valid_index(self:Self, index: int, _raise: bool = True) -> int:
+    def _valid_index(self: Self, index: int, _raise: bool = True) -> int:
         _n = len(self)
         if 0 <= index:
             if index > _n:
@@ -83,11 +83,11 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
         return index
 
     @overload
-    def __getitem__(self:Self, __i: int) -> Node[_T]: ...
+    def __getitem__(self: Self, __i: int) -> Node[_T]: ...
     @overload
-    def __getitem__(self:Self, __s: slice) -> List[Node[_T]]: ...
+    def __getitem__(self: Self, __s: slice) -> List[Node[_T]]: ...
 
-    def __getitem__(self:Self, _index: int | slice) -> Node[_T] | List[Node[_T]]:
+    def __getitem__(self: Self, _index: int | slice) -> Node[_T] | List[Node[_T]]:
         if isinstance(_index, int):
             _index = self._valid_index(_index)
             if 0 <= _index:
@@ -247,3 +247,19 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             else:
                 object.__setattr__(next_0, 'prev', node_1)
             object.__setattr__(next_1, 'prev', node_0)
+
+    @overload
+    def remove(self: Self, __v: _T) -> None: ...
+    @overload
+    def remove(self: Self, __n: Node[_T]) -> None: ...
+
+    def remove(self: Self, _value: _T | Node[_T]) -> None:
+        '''S.remove(value) -- remove first occurrence of value.
+           Raise ValueError if the value is not present.
+        '''
+        try:
+            object.__setattr__(_value.prev, 'next', _value.next)
+            object.__setattr__(_value.next, 'prev', _value.prev)
+            del _value
+        except AttributeError:
+            del self[self.index(_value)]

@@ -248,3 +248,19 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
             else:
                 object.__setattr__(next_0, 'prev', node_1)
             object.__setattr__(next_1, 'prev', node_0)
+
+    @overload
+    def remove(self: Self, __v: _T) -> None: ...
+    @overload
+    def remove(self: Self, __n: Node[_T]) -> None: ...
+
+    def remove(self: Self, _value: _T | Node[_T]) -> None:
+        '''S.remove(value) -- remove first occurrence of value.
+           Raise ValueError if the value is not present.
+        '''
+        try:
+            object.__setattr__(_value.prev, 'next', _value.next)
+            object.__setattr__(_value.next, 'prev', _value.prev)
+            del _value
+        except AttributeError:
+            del self[self.index(_value)]
