@@ -37,7 +37,7 @@ class Node(Generic[_T]):
 
 class List(MutableSequence[Node[_T]], Generic[_T]):
     'doubly circularly linked list class'
-    __slots__ = ('_head', '_tail', )
+    __slots__ = ('head', )
 
     @overload
     def __init__(self: Self) -> None: ...
@@ -45,24 +45,30 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def __init__(self: Self, __i: Iterable[_T]) -> None: ...
 
     def __init__(self: Self, _iterable: Iterable[_T] | None = None) -> None:
-        self._head: Node[None] = Node(None)
-        object.__setattr__(self._head, 'next', self._head)
-        object.__setattr__(self._head, 'prev', self._head)
+        self.head: Node[None]
+        object.__setattr__(self, 'head', Node(None))
+        object.__setattr__(self.head, 'next', self.head)
+        object.__setattr__(self.head, 'prev', self.head)
         if _iterable is not None:
             for _v in _iterable:
                 self.append(_v)
+
+    def __setattr__(self: Self, _name: str, _value: Any) -> None:
+        if _name in self.__slots__:
+            raise AttributeError('cannot assign to field \'head\' and \'tail\'')
+        object.__setattr__(_name, _value)
 
     def __repr__(self: Self) -> str:
         return repr([v for v in self])
 
     def __sizeof__(self: Self) -> int:
-        return sys.getsizeof(self._head) + sum([sys.getsizeof(_v) for _v in self])
+        return sys.getsizeof(self.head) + sum([sys.getsizeof(_v) for _v in self])
 
     def __len__(self: Self) -> int:
         _len = 0
-        node = self._head.next
+        node = self.head.next
         while True:
-            if node is self._head:
+            if node is self.head:
                 break
             node = node.next
             _len += 1
@@ -91,20 +97,20 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
         if isinstance(_index, int):
             _index = self._valid_index(_index)
             if 0 <= _index:
-                node = self._head.next
-                if node is self._head:
+                node = self.head.next
+                if node is self.head:
                     raise IndexError('list assignment index out of range')
                 for _ in range(_index):
                     node = node.next
-                    if node is self._head:
+                    if node is self.head:
                         raise IndexError('list assignment index out of range')
             else:
-                node = self._head.prev
-                if node is self._head:
+                node = self.head.prev
+                if node is self.head:
                     raise IndexError('list assignment index out of range')
                 for _ in range(self._valid_index(_index), -1):
                     node = node.prev
-                    if node is self._head:
+                    if node is self.head:
                         raise IndexError('list assignment index out of range')
             return node
         elif isinstance(_index, slice):
@@ -122,20 +128,20 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
         if isinstance(_index, int):
             _index = self._valid_index(_index)
             if 0 <= _index:
-                node = self._head.next
-                if node is self._head:
+                node = self.head.next
+                if node is self.head:
                     raise IndexError('list assignment index out of range')
                 for _ in range(_index):
                     node = node.next
-                    if node is self._head:
+                    if node is self.head:
                         raise IndexError('list assignment index out of range')
             else:
-                node = self._head.prev
-                if node is self._head:
+                node = self.head.prev
+                if node is self.head:
                     raise IndexError('list assignment index out of range')
                 for _ in range(_index, -1):
                     node = node.prev
-                    if node is self._head:
+                    if node is self.head:
                         raise IndexError('list assignment index out of range')
             new_node = Node(_value, node.prev, node.next)
             object.__setattr__(node.prev, 'next', new_node)
@@ -160,20 +166,20 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
         if isinstance(_index, int):
             _index = self._valid_index(_index)
             if 0 <= _index:
-                node = self._head.next
-                if node is self._head:
+                node = self.head.next
+                if node is self.head:
                     raise IndexError('list assignment index out of range')
                 for _ in range(_index):
                     node = node.next
-                    if node is self._head:
+                    if node is self.head:
                         raise IndexError('list assignment index out of range')
             else:
-                node = self._head.prev
-                if node is self._head:
+                node = self.head.prev
+                if node is self.head:
                     raise IndexError('list assignment index out of range')
                 for _ in range(self._valid_index(_index), -1):
                     node = node.prev
-                    if node is self._head:
+                    if node is self.head:
                         raise IndexError('list assignment index out of range')
             object.__setattr__(node.prev, 'next', node.next)
             object.__setattr__(node.next, 'prev', node.prev)
@@ -199,9 +205,11 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def insert(self: Self, __i: int, __v: _T) -> None: ...
     @overload
     def insert(self: Self, __n: Node[_T], __v: _T) -> None: ...
+    @overload
+    def insert(self: Self, __n: Node[None], __v: _T) -> None: ...
 
     def insert(self: Self, _index: int | Node[_T], _value: _T) -> None:
-        'insert value before index or next node'
+        'insert value next to index or node'
         try:
             node = Node(_value, _index, _index.next)
             object.__setattr__(_index.next, 'prev', node)
@@ -209,20 +217,27 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
         except AttributeError as exc:
             if isinstance(_index, int):
                 _index = self._valid_index(_index, False)
-                if _index == 0:
-                    node = Node(_value, self._head, self._head.next)
-                    object.__setattr__(self._head.next, 'prev', node)
-                    object.__setattr__(self._head, 'next', node)
+                if 0 <= _index:
+                    node = self.head
+                    for _ in range(_index):
+                        node = node.next
+                        if node is self.head:
+                            break
                 else:
-                    self.insert(self[_index - 1], _value)
+                    node = self.head
+                    for _ in range(self._valid_index(_index), 0):
+                        node = node.prev
+                        if node is self.head:
+                            break
+                self.insert(node, _value)
             else:
                 raise IndexError('index must be integers or a node') from exc
 
     def append(self: Self, _value: _T) -> None:
         'append value to the end of the sequence'
-        node = Node(_value, self._head.prev, self._head)
-        object.__setattr__(self._head.prev, 'next', node)
-        object.__setattr__(self._head, 'prev', node)
+        node = Node(_value, self.head.prev, self.head)
+        object.__setattr__(self.head.prev, 'next', node)
+        object.__setattr__(self.head, 'prev', node)
 
     def reverse(self: Self):
         'reverse the list'
