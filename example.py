@@ -5,7 +5,7 @@ from linked_list import *
 ELEMENT_COUNT = 1000
 
 
-def list_performance_check(_list:MutableSequence, _print:bool=False):
+def list_performance_check(_list: MutableSequence, _print: bool = False):
     '''list performance check method'''
     print(f'{_list.__class__.__name__}, element count {ELEMENT_COUNT}')
     start = time.time()
@@ -29,7 +29,7 @@ def list_performance_check(_list:MutableSequence, _print:bool=False):
     _list.extend(tmp)
     print(f'\textend time: {time.time() - start}')
     if _print:
-        print(f'\t{_list}')        
+        print(f'\t{_list}')
     start = time.time()
     for _i in _list:
         if _print:
@@ -44,6 +44,7 @@ def list_performance_check(_list:MutableSequence, _print:bool=False):
     if _print:
         print()
     print(f'\tfor reversed time: {time.time() - start}')
+
 
 list_performance_check(list())
 list_performance_check(SinglyLinkedList())
