@@ -1,14 +1,13 @@
-"""linked list module"""
+'''linked list module'''
 
-from .singly_linked_list import SinglyLinked
-from .doubly_linked_list import DoublyLinked
-from .singly_circularly_linked_list import SinglyCircularlyLinked
-from .doubly_circularly_linked_list import DoublyCircularlyLinked
-
+from .singly_linked_list import List as SinglyLinkedList, Node as SinglyLinkedNone
+from .doubly_linked_list import List as DoublyLinkedList, Node as DoublyLinkedNode
+from .singly_circularly_linked_list import List as SinglyCircularlyLinkedList, Node as SinglyCircularlyLinkedNone
+from .doubly_circularly_linked_list import List as DoublyCircularlyLinkedList, Node as DoublyCircularlyLinkedNode
 
 __all__ = [
-    "SinglyLinked",
-    "DoublyLinked",
-    "SinglyCircularlyLinked",
-    "DoublyCircularlyLinked",
+    'SinglyLinkedList', 'SinglyLinkedNone',
+    'DoublyLinkedList', 'DoublyLinkedNode',
+    'SinglyCircularlyLinkedList', 'SinglyCircularlyLinkedNone',
+    'DoublyCircularlyLinkedList', 'DoublyCircularlyLinkedNode',
 ]
