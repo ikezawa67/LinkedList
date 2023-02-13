@@ -30,11 +30,8 @@ class Node(Generic[_T]):
         self.next: Node
 
     def __setattr__(self: Self, _name: str, _value: Any) -> None:
-        try:
-            if _name == 'next':
-                raise Exception('cannot assign to field \'next\'')
-        except AttributeError:
-            pass
+        if _name == 'next':
+            raise AttributeError('cannot assign to field \'next\'')
         object.__setattr__(_name, _value)
 
 
