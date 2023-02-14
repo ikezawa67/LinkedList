@@ -2,7 +2,7 @@ import time
 from typing import MutableSequence
 from linked_list import *
 
-ELEMENT_COUNT = 10
+ELEMENT_COUNT = 1000
 
 
 def list_performance_check(_list: MutableSequence, _print: bool = False):

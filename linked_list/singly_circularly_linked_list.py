@@ -155,7 +155,11 @@ class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
     @overload
     def insert(self: Self, __n: Node[None], __v: _T) -> None: ...
 
+<<<<<<< HEAD
     def insert(self: Self, _index: int | Node[_T] | Node[None], _value: _T) -> None:
+=======
+    def insert(self: Self, _index: int | Node[_T], _value: _T) -> None:
+>>>>>>> 40b7fa7f8332c24796152d55e011fc1aab4eb1d6
         'insert value to index or next to node'
         try:
             node = Node(_value, _index.next)
