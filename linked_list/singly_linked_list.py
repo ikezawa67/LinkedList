@@ -170,7 +170,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def insert(self: Self, __n: Node[None], __v: _T) -> None: ...
 
     def insert(self: Self, _index: int | Node[_T] | Node[None], _value: _T) -> None:
-        'insert value next to index or node'
+        'insert value to index or next to node'
         try:
             node = Node(_value, _index.next)
             object.__setattr__(_index, 'next', node)

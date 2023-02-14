@@ -209,7 +209,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def insert(self: Self, __n: Node[None], __v: _T) -> None: ...
 
     def insert(self: Self, _index: int | Node[_T], _value: _T) -> None:
-        'insert value next to index or node'
+        'insert value to index or next to node'
         try:
             node = Node(_value, _index, _index.next)
             object.__setattr__(_index.next, 'prev', node)
@@ -225,7 +225,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
                             break
                 else:
                     node = self.head
-                    for _ in range(self._valid_index(_index), 0):
+                    for _ in range(_index, 0):
                         node = node.prev
                         if node is self.head:
                             break
