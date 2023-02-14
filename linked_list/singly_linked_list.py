@@ -1,40 +1,34 @@
 '''singly linked list module'''
 from __future__ import annotations
 import sys
-from typing import Any
-from typing import TypeVar, Generic, Type, Self, Iterable, MutableSequence
-from typing import overload
+from typing import TypeVar, Generic, Self, Iterable, MutableSequence, overload
+from .utility import _Protect
 
 _T = TypeVar('_T')
 
 
 class Node(Generic[_T]):
     'singly linked node class'
-    def __new__(cls: Type[Self[_T]], _value: _T, _next: Node | None = None) -> Node:
+    __slots__ = ('next', )
+
+    def __new__(cls: type[Self[_T]], _value: _T, _next: Node | None = None) -> Node:
         try:
             if 'next' in vars(_value):
                 raise Exception('node \'value\' must not have \'next\'')
         except TypeError:
             pass
         try:
-            _cls = type('Node', (type(_value), ), {'next': _next})
+            _cls = type('Node', (_Protect, object, type(_value), ), {'next': _next})
         except TypeError:
-            _cls = type('Node', (object, ), {'next': _next})
+            _cls = type('Node', (_Protect, object, ), {'next': _next})
         _cls.__init__ = Node.__init__
-        _cls.__setattr__ = Node.__setattr__
-        _cls.__slots__ = ('next', )
-        return _cls(_value)
+        return _cls(_value, _next)
 
     def __init__(self: Self, _value: _T, _next: Node | None = None) -> None:
-        self.next: Node | None
-
-    def __setattr__(self: Self, _name: str, _value: Any) -> None:
-        if _name == 'next':
-            raise AttributeError('cannot assign to field \'next\'')
-        object.__setattr__(_name, _value)
+        self.next: Node | None = _next
 
 
-class List(MutableSequence[Node[_T]], Generic[_T]):
+class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
     'singly linked list class'
     __slots__ = ('head', 'tail', )
 
@@ -44,18 +38,11 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def __init__(self: Self, __i: Iterable[_T]) -> None: ...
 
     def __init__(self: Self, _iterable: Iterable[_T] | None = None) -> None:
-        self.head: Node[None]
-        self.tail: Node[_T] | Node[None]
-        object.__setattr__(self, 'head', Node(None))
-        object.__setattr__(self, 'tail', self.head)
+        self.head: Node[None] = Node(None)
+        self.tail: Node[_T] | Node[None] = self.head
         if isinstance(_iterable, Iterable):
             for _v in _iterable:
                 self.append(_v)
-
-    def __setattr__(self: Self, _name: str, _value: Any) -> None:
-        if _name in self.__slots__:
-            raise AttributeError('cannot assign to field \'head\' and \'tail\'')
-        object.__setattr__(_name, _value)
 
     def __repr__(self: Self) -> str:
         return repr([_v for _v in self])
@@ -170,7 +157,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def insert(self: Self, __n: Node[None], __v: _T) -> None: ...
 
     def insert(self: Self, _index: int | Node[_T] | Node[None], _value: _T) -> None:
-        'insert value next to index or node'
+        'insert value to index or next to node'
         try:
             node = Node(_value, _index.next)
             object.__setattr__(_index, 'next', node)
@@ -189,9 +176,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
 
     def append(self: Self, _value: _T) -> None:
         'append value to the end of the sequence'
-        node = Node(_value)
-        object.__setattr__(self.tail, 'next', node)
-        object.__setattr__(self, 'tail', node)
+        self.insert(self.tail, _value)
 
     def reverse(self: Self):
         'reverse the list'

@@ -1,41 +1,39 @@
 '''doubly linked list module'''
 from __future__ import annotations
 import sys
-from typing import Any, Iterator
-from typing import TypeVar, Generic, Type, Self, Iterable, MutableSequence
-from typing import overload
+from typing import TypeVar, Generic, Self, Iterable, Iterator, MutableSequence, overload
+from .utility import _Protect
 
 _T = TypeVar('_T')
 
 
 class Node(Generic[_T]):
     'doubly linked node class'
-    def __new__(cls: Type[Self[_T]], _value: _T, _prev: Node | None = None, _next: Node | None = None) -> Node:
+    __slots__ = ('next', 'prev', )
+
+    def __new__(cls: type[Self[_T]], _value: _T, _prev: Node | None = None, _next: Node | None = None) -> Node:
         try:
             if 'prev' in vars(_value) or 'next' in vars(_value):
                 raise Exception('node \'value\' must not have \'prev\' and \'next\'')
         except TypeError:
             pass
         try:
-            _cls = type('Node', (type(_value), ), {'prev': _prev, 'next': _next})
+            _cls = type('Node', (_Protect, object, type(_value), ), {'prev': _prev, 'next': _next})
         except TypeError:
-            _cls = type('Node', (object, ), {'prev': _prev, 'next': _next})
+            _cls = type('Node', (_Protect, object, ), {'prev': _prev, 'next': _next})
         _cls.__init__ = Node.__init__
-        _cls.__setattr__ = Node.__setattr__
-        _cls.__slots__ = ('next', 'prev', )
-        return _cls(_value)
+        return _cls(_value, _prev, _next)
 
     def __init__(self: Self, _value: _T, _prev: Node | None = None, _next: Node | None = None) -> None:
-        self.prev: Node | None
-        self.next: Node | None
+        self.prev: Node | None = _prev
+        if _prev is not None:
+            object.__setattr__(_prev, 'next', self)
+        self.next: Node | None = _next
+        if _next is not None:
+            object.__setattr__(_next, 'prev', self)
 
-    def __setattr__(self: Self, _name: str, _value: Any) -> None:
-        if _name == 'next':
-            raise AttributeError('cannot assign to field \'next\'')
-        object.__setattr__(_name, _value)
 
-
-class List(MutableSequence[Node[_T]], Generic[_T]):
+class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
     'doubly linked list class'
     __slots__ = ('head', 'tail', )
 
@@ -45,19 +43,11 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     def __init__(self: Self, __i: Iterable[_T]) -> None: ...
 
     def __init__(self: Self, _iterable: Iterable[_T] | None = None) -> None:
-        self.head: Node[None]
-        self.tail: Node[None]
-        object.__setattr__(self, 'head', Node(None))
-        object.__setattr__(self, 'tail', Node(None, self.head))
-        object.__setattr__(self.head, 'next', self.tail)
+        self.head: Node[None] = Node(None)
+        self.tail: Node[None] = Node(None, self.head)
         if isinstance(_iterable, Iterable):
             for _v in _iterable:
                 self.append(_v)
-
-    def __setattr__(self: Self, _name: str, _value: Any) -> None:
-        if _name in self.__slots__:
-            raise AttributeError('cannot assign to field \'head\' and \'tail\'')
-        object.__setattr__(_name, _value)
 
     def __repr__(self: Self) -> str:
         return repr([_v for _v in self])
@@ -144,9 +134,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
                     node = node.prev
                     if node is self.head:
                         raise IndexError('list assignment index out of range')
-            new_node = Node(_value, node.prev, node.next)
-            object.__setattr__(node.prev, 'next', new_node)
-            object.__setattr__(node.next, 'prev', new_node)
+            Node(_value, node.prev, node.next)
             del node
         elif isinstance(_index, slice):
             if isinstance(_value, Iterable):
@@ -209,12 +197,12 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
     @overload
     def insert(self: Self, __n: Node[None], __v: _T) -> None: ...
 
-    def insert(self: Self, _index: int | Node[_T], _value: _T) -> None:
-        'insert value next to index or node'
+    def insert(self: Self, _index: int | Node[_T] | Node[None], _value: _T) -> None:
+        'insert value to index or next to node'
         try:
-            node = Node(_value, _index, _index.next)
-            object.__setattr__(_index.next, 'prev', node)
-            object.__setattr__(_index, 'next', node)
+            if _index is self.tail:
+                raise IndexError('cannot insert next to tail node')
+            Node(_value, _index, _index.next)
         except AttributeError as exc:
             if isinstance(_index, int):
                 _index = self._valid_index(_index, False)
@@ -226,7 +214,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
                         node = node.next
                 else:
                     node = self.tail
-                    for _ in range(self._valid_index(_index), 0):
+                    for _ in range(_index, 0):
                         if node is self.head:
                             break
                         node = node.prev
@@ -236,9 +224,7 @@ class List(MutableSequence[Node[_T]], Generic[_T]):
 
     def append(self: Self, _value: _T) -> None:
         'append value to the end of the sequence'
-        node = Node(_value, self.tail.prev, self.tail)
-        object.__setattr__(self.tail.prev, 'next', node)
-        object.__setattr__(self.tail, 'prev', node)
+        self.insert(self.tail.prev, _value)
 
     def reverse(self: Self):
         'reverse the list'
