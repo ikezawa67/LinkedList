@@ -23,11 +23,7 @@ class Node(Generic[_T]):
 
         def _method(func: Callable):
             def wrapper(*args: Any):
-                self = args[0].value
-                if 1 == len(args):
-                    return func(self)
-                else:
-                    return func(self, *args[1:])
+                return func(*tuple(arg.value if hasattr(arg, 'value') else arg for arg in args))
             return wrapper
 
         classdict = {method: _method(getattr(type(_value), method)) for method in dir(type(_value)) if _is_sunder(method)}
