@@ -2,6 +2,12 @@
 
 これは、Pythonで実装したリンクドリストのモジュールです。
 
+## 実装環境
+
+Windows 11 64bit
+
+Python 3.11.1 64bit
+
 ## 実装したリンクドリスト一覧
 
 * singly_linked_list（片方向リスト）
