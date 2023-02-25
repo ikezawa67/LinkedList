@@ -15,7 +15,7 @@ class Node(Generic[_T]):
     next: Node[_T] | Node[None]
 
     def __new__(cls: type[Self[_T]], _value: _T, _prev: Node | None = None, _next: Node | None = None) -> Node:
-        def _is_sunder(name: str) -> bool:
+        def _is_special(name: str) -> bool:
             if name in {'__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__repr__', '__str__', '__or__', '__ror__'}:
                 return True
             elif name in dir(object.__class__):
@@ -27,7 +27,7 @@ class Node(Generic[_T]):
                 return func(*tuple(arg.value if hasattr(arg, 'value') else arg for arg in args))
             return wrapper
 
-        classdict = {method: _method(getattr(type(_value), method)) for method in dir(type(_value)) if _is_sunder(method)}
+        classdict = {method: _method(getattr(type(_value), method)) for method in dir(type(_value)) if _is_special(method)}
         classdict.update({'value': _value, 'prev': Node.prev, 'next': Node.next})
         _cls = types.new_class('Node', (object, ), exec_body=lambda ns: ns.update(classdict))
         self = object.__new__(_cls)
