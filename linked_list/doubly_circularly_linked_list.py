@@ -1,43 +1,68 @@
 '''doubly circularly linked list module'''
 from __future__ import annotations
 import sys
-from typing import TypeVar, Generic, Self, Iterable, Iterator, MutableSequence, overload
-from .utility import _Protect
+import types
+from typing import Any, Callable, Generic, TypeVar, Iterable, Iterator, MutableSequence, overload, Self
 
 _T = TypeVar('_T')
 
 
 class Node(Generic[_T]):
     'doubly circularly linked node class'
-    __slots__ = ('next', 'prev', )
+    __slots__ = ('value', '_prev', '_next',)
+    value: _T
+    prev: Node[_T] | Node[None]
+    next: Node[_T] | Node[None]
 
     def __new__(cls: type[Self[_T]], _value: _T, _prev: Node | None = None, _next: Node | None = None) -> Node:
-        try:
-            if 'prev' in vars(_value) or 'next' in vars(_value):
-                raise Exception('node \'value\' must not have \'prev\' and \'next\'')
-        except TypeError:
-            pass
-        try:
-            _cls = type('Node', (_Protect, object, type(_value), ), {'prev': _prev, 'next': _next})
-        except TypeError:
-            _cls = type('Node', (_Protect, object, ), {'prev': _prev, 'next': _next})
-        _cls.__init__ = Node.__init__
-        return _cls(_value, _prev, _next)
+        def _is_sunder(name: str) -> bool:
+            if name in {'__lt__', '__le__', '__eq__', '__ne__', '__gt__', '__ge__', '__repr__', '__str__', '__or__', '__ror__'}:
+                return True
+            elif name in dir(object.__class__):
+                return False
+            return len(name) > 4 and name[0:2] == name[-2:] == '__'
 
-    def __init__(self: Self, _value: _T, _prev: Node | None = None, _next: Node | None = None) -> None:
-        if _prev is None:
-            self.prev: Node = self
-        else:
-            self.prev = _prev
-            object.__setattr__(_prev, 'next', self)
-        if _next is None:
-            self.next: Node = self
-        else:
-            self.next = _next
-            object.__setattr__(_next, 'prev', self)
+        def _method(func: Callable):
+            def wrapper(*args: Any):
+                self = args[0].value
+                if 1 == len(args):
+                    return func(self)
+                else:
+                    return func(self, *args[1:])
+            return wrapper
+
+        classdict = {method: _method(getattr(type(_value), method)) for method in dir(type(_value)) if _is_sunder(method)}
+        classdict.update({'value': _value, 'prev': Node.prev, 'next': Node.next})
+        _cls = types.new_class('Node', (object, ), exec_body=lambda ns: ns.update(classdict))
+        self = object.__new__(_cls)
+        self.prev = _prev
+        self.next = _next
+        return self
+
+    @property
+    def prev(self) -> Node[_T] | Node[None]:
+        '''prev node'''
+        return self._prev
+
+    @prev.setter
+    def prev(self, _prev: Node[_T] | Node[None]) -> None:
+        self._prev = self if _prev is None else _prev
+        if hasattr(_prev, 'next') and _prev.next != self:
+            _prev.next = self
+
+    @property
+    def next(self) -> Node[_T] | Node[None]:
+        '''next node'''
+        return self._next
+
+    @next.setter
+    def next(self, _next: Node[_T] | Node[None]) -> None:
+        self._next = self if _next is None else _next
+        if hasattr(_next, 'prev') and _next.prev != self:
+            _next.prev = self
 
 
-class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
+class List(MutableSequence[Node[_T]], Generic[_T]):
     'doubly circularly linked list class'
     __slots__ = ('head', )
 
@@ -137,8 +162,7 @@ class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
                     node = node.prev
                     if node is self.head:
                         raise IndexError('list assignment index out of range')
-            Node(_value, node.prev, node.next)
-            del node
+            node.value = _value
         elif isinstance(_index, slice):
             if isinstance(_value, Iterable):
                 start, stop, stride = _index.indices(len(self))
@@ -173,8 +197,7 @@ class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
                     node = node.prev
                     if node is self.head:
                         raise IndexError('list assignment index out of range')
-            object.__setattr__(node.prev, 'next', node.next)
-            object.__setattr__(node.next, 'prev', node.prev)
+            node.prev.next = node.next
             del node
         elif isinstance(_index, slice):
             start, stop, stride = _index.indices(len(self))
@@ -233,23 +256,23 @@ class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
             node_0, node_1 = self[i], self[- (i + 1)]
             prev_0, prev_1 = node_0.prev, node_1.prev
             next_0, next_1 = node_0.next, node_1.next
-            object.__setattr__(prev_0, 'next', node_1)
-            object.__setattr__(prev_1, 'next', node_0)
-            object.__setattr__(node_0, 'next', next_1)
+            prev_0.next = node_1
+            prev_1.next = node_0
+            node_0.next = next_1
             if next_0 is node_1:
-                object.__setattr__(node_1, 'next', node_0)
+                node_1.next = node_0
             else:
-                object.__setattr__(node_1, 'next', next_0)
+                node_1.next = next_0
             if node_0 is prev_1:
-                object.__setattr__(node_0, 'prev', node_1)
+                node_0.prev = node_1
             else:
-                object.__setattr__(node_0, 'prev', prev_1)
-            object.__setattr__(node_1, 'prev', prev_0)
+                node_0.prev = prev_1
+            node_1.prev = prev_0
             if next_0 is node_1:
-                object.__setattr__(next_0, 'prev', prev_0)
+                next_0.prev = prev_0
             else:
-                object.__setattr__(next_0, 'prev', node_1)
-            object.__setattr__(next_1, 'prev', node_0)
+                next_0.prev = node_1
+            next_1.prev = node_0
 
     @overload
     def remove(self: Self, __v: _T) -> None: ...
@@ -259,8 +282,8 @@ class List(_Protect, MutableSequence[Node[_T]], Generic[_T]):
     def remove(self: Self, _value: _T | Node[_T]) -> None:
         'remove first occurrence of value or node'
         try:
-            object.__setattr__(_value.prev, 'next', _value.next)
-            object.__setattr__(_value.next, 'prev', _value.prev)
+            _value.prev.next = _value.next
+            _value.next.prev = _value.prev
             del _value
         except AttributeError:
             del self[self.index(_value)]
